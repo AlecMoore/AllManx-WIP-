@@ -2,32 +2,68 @@
 using System.Data;
 using System.Data.SqlClient;
 
-namespace OrganisedMe.StoredProcedures
+namespace AllManx.StoredProcedures
 {
     public static class StoredProcedures
     {
 
         public static string SqlconString = "Data Source=DESKTOP-J6APBTK;Initial Catalog=AllManx;Integrated Security=True";
-        public static bool CreateUser(User user)
+        public static int CreateUser(User user)
         {
             try
             {
-                using (SqlConnection sqlCon = new SqlConnection(SqlconString))
+                int userId = 0;
+                using (SqlConnection con = new SqlConnection(SqlconString))
                 {
-                    sqlCon.Open();
-                    SqlCommand sql_cmnd = new SqlCommand("dbo.CreateUser", sqlCon);
-                    sql_cmnd.CommandType = CommandType.StoredProcedure;
-                    sql_cmnd.Parameters.AddWithValue("@Email", user.Email);
-                    sql_cmnd.Parameters.AddWithValue("@Password", user.Password);
-                    sql_cmnd.ExecuteNonQuery();
-                    sqlCon.Close();
+                    using (SqlCommand cmd = new SqlCommand("Insert_User"))
+                    {
+                        using (SqlDataAdapter sda = new SqlDataAdapter())
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@Username", user.Username);
+                            cmd.Parameters.AddWithValue("@Password", user.Password);
+                            cmd.Parameters.AddWithValue("@Email", user.Email);
+                            cmd.Connection = con;
+                            con.Open();
+                            userId = Convert.ToInt32(cmd.ExecuteScalar());
+                            con.Close();
+                        }
+                    }
+                }
+                return userId;
+            } catch (Exception ex)
+            {
+                return 0;
+            }
+        }
 
-                    return true;
+        public static bool InsertActivationCode(int UserId, Guid ActivationCode)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(SqlconString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("INSERT INTO UserActivation VALUES(@UserId, @ActivationCode)"))
+                    {
+                        using (SqlDataAdapter sda = new SqlDataAdapter())
+                        {
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@UserId", UserId);
+                            cmd.Parameters.AddWithValue("@ActivationCode", ActivationCode);
+                            cmd.Connection = con;
+                            con.Open();
+                            cmd.ExecuteNonQuery();
+                            con.Close();
+
+                            return true;
+                        }
+                    }
                 }
             } catch (Exception ex)
             {
                 return false;
             }
+            
         }
 
         public static bool DeleteUser(int Id)
