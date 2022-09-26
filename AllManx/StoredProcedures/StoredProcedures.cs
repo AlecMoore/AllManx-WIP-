@@ -15,7 +15,7 @@ namespace AllManx.StoredProcedures
                 int userId = 0;
                 using (SqlConnection con = new SqlConnection(SqlconString))
                 {
-                    using (SqlCommand cmd = new SqlCommand("Insert_User"))
+                    using (SqlCommand cmd = new SqlCommand("CreateUser"))
                     {
                         using (SqlDataAdapter sda = new SqlDataAdapter())
                         {
@@ -64,6 +64,39 @@ namespace AllManx.StoredProcedures
                 return false;
             }
             
+        }
+
+        public static int CompareActivationCode(Guid activationCode)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(SqlconString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("DELETE FROM UserActivation WHERE ActivationCode = @ActivationCode"))
+                    {
+                        using (SqlDataAdapter sda = new SqlDataAdapter())
+                        {
+                            cmd.CommandType = CommandType.Text;
+                            cmd.Parameters.AddWithValue("@ActivationCode", activationCode);
+                            cmd.Connection = con;
+                            con.Open();
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            con.Close();
+                            if (rowsAffected == 1)
+                            {
+                                return 2;
+                            }
+                            else
+                            {
+                                return 1;
+                            }
+                        }
+                    }
+                }
+            } catch(Exception ex)
+            {
+                return 0;
+            }    
         }
 
         public static bool DeleteUser(int Id)

@@ -26,8 +26,7 @@ namespace AllManx.Controllers
         [HttpPost]
         public ActionResult CreateUser(User user)
         {
-            if (ModelState.IsValid)
-            {
+
                 user.Password = Hashing.HashPassword(user.Password);
 
                 int userId = StoredProcedures.StoredProcedures.CreateUser(user);
@@ -44,9 +43,10 @@ namespace AllManx.Controllers
                         message = "Registration successful. Activation email has been sent. ";
                         user.Id = userId;
                         SendActivationEmail(user);
-                        break;
+                        return ConfirmEmail();
                 }
-            }
+            
+            return RedirectToAction("/Index");
         }
 
 
@@ -63,24 +63,47 @@ namespace AllManx.Controllers
         {
             Guid activationCode = Guid.NewGuid();
             StoredProcedures.StoredProcedures.InsertActivationCode(user.Id, activationCode);
-            using (MailMessage mm = new MailMessage("sender@gmail.com", user.Email))
+            string baseUrl = string.Format("{0}://{1}",HttpContext.Request.Scheme, HttpContext.Request.Host);
+            using (MailMessage mm = new MailMessage("AllManxApp@gmail.com", user.Email))
             {
                 mm.Subject = "Account Activation";
                 string body = "Hello " + user.Username + ",";
                 body += "<br /><br />Please click the following link to activate your account";
-                body += "<br /><a href = '" + Request.Url.AbsoluteUri.Replace("CS.aspx", "CS_Activation.aspx?ActivationCode=" + activationCode) + "'>Click here to activate your account.</a>";
+                body += "<br /><a href = '" + $"{baseUrl}/Register/EmailActivation?ActivationCode={activationCode}" + "'>Click here to activate your account.</a>";
                 body += "<br /><br />Thanks";
                 mm.Body = body;
                 mm.IsBodyHtml = true;
                 SmtpClient smtp = new SmtpClient();
                 smtp.Host = "smtp.gmail.com";
                 smtp.EnableSsl = true;
-                NetworkCredential NetworkCred = new NetworkCredential("sender@gmail.com", "<password>");
-                smtp.UseDefaultCredentials = true;
+                NetworkCredential NetworkCred = new NetworkCredential("AllManxApp@gmail.com", "smmsphpvvchrlmmj");
+                smtp.UseDefaultCredentials = false;
                 smtp.Credentials = NetworkCred;
                 smtp.Port = 587;
                 smtp.Send(mm);
             }
+        }
+
+        public ActionResult ConfirmEmail()
+        {
+            return View("ConfirmEmail");
+        }
+
+        public ActionResult EmailActivation(Guid ActivationCode)
+        {
+            int response = StoredProcedures.StoredProcedures.CompareActivationCode(ActivationCode);
+
+
+            switch (response)
+            {
+                case 2:
+                    return View("LoginController/LoggedIn");
+
+                default:
+                    return View();
+
+            }
+            
         }
     }
 }
