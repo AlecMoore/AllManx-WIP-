@@ -30,9 +30,25 @@ namespace AllManx.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public ActionResult LoginIn()
+        [HttpPost]
+        public ActionResult SignIn(Login login)
         {
-            return View("LoggedIn");
+
+            int UserId = StoredProcedures.StoredProcedures.GetUserIdFromEmail(login.Email);
+            string hash = StoredProcedures.StoredProcedures.GetHash(UserId);
+            if (Hashing.ValidatePassword(login.Password, hash))
+            {
+                StoredProcedures.StoredProcedures.UpdateLastLogin(UserId);
+                return Redirect("/Login/LoggedIn");
+            } else
+            {
+                return Redirect("/Home/Index");
+            }
+        }
+
+        public ActionResult LoggedIn()
+        {
+            return View();
         }
     }
 }

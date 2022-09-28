@@ -97,7 +97,7 @@ namespace AllManx.Controllers
             switch (response)
             {
                 case 2:
-                    return View("LoginController/LoggedIn");
+                    return Redirect("/Login/LoggedIn");
 
                 default:
                     return View();

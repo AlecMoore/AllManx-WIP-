@@ -156,5 +156,72 @@ namespace AllManx.StoredProcedures
             }
         }
 
+        public static string GetHash(int UserId)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(SqlconString))
+                {
+
+                    con.Open();
+                    SqlCommand command = new SqlCommand("SELECT Password FROM Users WHERE UserId = @UserId", con);
+                    command.Parameters.AddWithValue("@UserId", UserId);
+                    string result = (string)command.ExecuteScalar();
+
+                    con.Close();
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                return "Error";
+            }            
+        }
+
+        public static int GetUserIdFromEmail(string email)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(SqlconString))
+                {
+                    con.Open();
+                    SqlCommand command = new SqlCommand("Select UserId from Users where Email=@Email", con);
+                    command.Parameters.AddWithValue("@Email", email);
+                    int result = Convert.ToInt32(command.ExecuteScalar());
+
+                    con.Close();
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                return 0;
+            }
+        }
+
+        public static bool UpdateLastLogin(int UserId)
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(SqlconString))
+                {
+                    con.Open();
+                    SqlCommand command = new SqlCommand("Update UserAdmin Set LastLogin = GETDATE() where UserId=@UserId", con);
+                    command.Parameters.AddWithValue("@UserId", UserId);
+                    command.ExecuteNonQuery();
+
+                    con.Close();
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
     }
 }
