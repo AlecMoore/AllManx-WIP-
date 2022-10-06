@@ -23,6 +23,7 @@ namespace AllManx.Controllers
             return View();
         }
 
+        [ValidateAntiForgeryToken]
         [HttpPost]
         public ActionResult CreateUser(User user)
         {
@@ -30,34 +31,26 @@ namespace AllManx.Controllers
                 user.Password = Hashing.HashPassword(user.Password);
 
                 int userId = StoredProcedures.StoredProcedures.CreateUser(user);
-                string message = string.Empty;
+                string error = string.Empty;
                 switch (userId)
                 {
                     case -1:
-                        message = "Username already exists.\\nPlease choose a different username.";
+                        error = "Username already exists.\\nPlease choose a different username.";
                         break;
                     case -2:
-                        message = "Supplied email address has already been used.";
+                        error = "Supplied email address has already been used.";
                         break;
                     default:
-                        message = "Registration successful. Activation email has been sent. ";
+                        error = "Registration successful. Activation email has been sent. ";
                         user.Id = userId;
                         SendActivationEmail(user);
                         return ConfirmEmail();
                 }
-            
-            return RedirectToAction("/Index");
+
+            ModelState.AddModelError("", error);
+
+            return View("Index");
         }
-
-
-
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
 
         private void SendActivationEmail(User user)
         {

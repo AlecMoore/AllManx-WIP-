@@ -3,6 +3,7 @@
 }
 
 <form action="Login/SignIn" method="post">
+   @Html.ValidationSummary(true)  
   <div class="container">
     <label for="email"><b>Email</b></label>
     <input type="text" placeholder="Enter Email" name="email" required>
