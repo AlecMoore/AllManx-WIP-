@@ -82,7 +82,7 @@ namespace AllManx.StoredProcedures
                             con.Open();
                             int rowsAffected = cmd.ExecuteNonQuery();
                             con.Close();
-                            if (rowsAffected == 1)
+                            if (rowsAffected > 0)
                             {
                                 return 2;
                             }

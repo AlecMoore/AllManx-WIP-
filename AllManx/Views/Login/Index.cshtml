@@ -3,6 +3,7 @@
 }
 
 <form action="Login/SignIn" method="post">
+    @Html.AntiForgeryToken()
    @Html.ValidationSummary(true)  
   <div class="container">
     <label for="email"><b>Email</b></label>

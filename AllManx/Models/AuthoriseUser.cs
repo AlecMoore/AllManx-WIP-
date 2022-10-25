@@ -1,35 +1,31 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using System.Security.Claims;
-using System.Web;
 
-namespace AllManx.Models
+namespace allmanx.models
 {
-    public class ClaimRequirementAttribute : TypeFilterAttribute
+    public class CustomAuthorizeAttribute : AuthorizeAttribute
     {
-        public ClaimRequirementAttribute(string claimType, string claimValue) : base(typeof(ClaimRequirementFilter))
+        private readonly string[] allowedroles;
+        public CustomAuthorizeAttribute(params string[] roles)
         {
-            Arguments = new object[] { new Claim(claimType, claimValue) };
+            this.allowedroles = roles;
         }
-    }
-
-    public class ClaimRequirementFilter : IAuthorizationFilter
-    {
-        readonly Claim _claim;
-
-        public ClaimRequirementFilter(Claim claim)
+        protected bool AuthoriseAttribute()
         {
-            _claim = claim;
-        }
-
-        public void OnAuthorization(AuthorizationFilterContext context)
-        {
-            var hasClaim = context.HttpContext.User.Claims.Any(c => c.Type == _claim.Type && c.Value == _claim.Value);
-            if (!hasClaim)
+            bool authorize = false;
+            foreach (var role in allowedroles)
             {
-                context.Result = new ForbidResult();
+                var user = context.appuser.where(m => m.userid == getuser.currentuser/* getting user form current context */ && m.role == role &&
+                m.isactive == true); // checking active users with allowed roles.  
+                if (user.count() > 0)
+                {
+                    authorize = true; /* return true if entity has current user(active) with specific role */
+                }
             }
+            return authorize;
+        }
+        protected override void handleunauthorizedrequest(authorizationcontext filtercontext)
+        {
+            filtercontext.result = new httpunauthorizedresult();
         }
     }
 }

@@ -6,6 +6,12 @@ using System.Diagnostics;
 using AllManx.StoredProcedures;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Principal;
+using System.Web;
+using System;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace AllManx.Controllers
 {
@@ -34,11 +40,25 @@ namespace AllManx.Controllers
         [HttpPost]
         public ActionResult SignIn(Login login)
         {
+            string wank = WindowsIdentity.GetCurrent().Name;
+            string User = HttpContext.User.Identity.Name;
+            string wana = HttpContext.Request.PathBase;
+
+            System.Security.Claims.ClaimsPrincipal currentUser = this.User;
+
+
+
 
             int UserId = StoredProcedures.StoredProcedures.GetUserIdFromEmail(login.Email);
             string hash = StoredProcedures.StoredProcedures.GetHash(UserId);
             if (Hashing.ValidatePassword(login.Password, hash))
             {
+                string[] roles = new string[10];
+                roles[0] = "NetworkUser";
+
+                var user = new GenericPrincipal(new ClaimsIdentity(login.Email), roles);
+                Thread.CurrentPrincipal = HttpContext.User = user;
+
                 StoredProcedures.StoredProcedures.UpdateLastLogin(UserId);
                 return Redirect("/Login/LoggedIn");
             } else
@@ -48,6 +68,7 @@ namespace AllManx.Controllers
             }
         }
 
+        //[Authorize]
         public ActionResult LoggedIn()
         {
             return View();
@@ -66,7 +87,7 @@ namespace AllManx.Controllers
         {
             SendPasswordRecoveryEmail(Email);
 
-            return View()
+            return View();
 
         }
         private void SendPasswordRecoveryEmail(string Email)
